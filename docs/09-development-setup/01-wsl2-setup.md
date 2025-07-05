@@ -34,6 +34,8 @@ dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux 
 dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
 ```
 
+![PowerShell 관리자 권한 실행](./2025-07-05-22-13-40.png)
+
 ### 시스템 재시작
 ```powershell
 # 재시작 필요
@@ -82,11 +84,15 @@ New password: [패스워드 입력]
 Retype new password: [패스워드 재입력]
 ```
 
+![Debian 초기 사용자 계정 생성 과정](./2025-07-05-22-28-47.png)
+
 ### WSL2 버전 확인
 ```bash
 # Windows PowerShell에서 확인
 wsl --list --verbose
 ```
+
+![WSL 배포판 목록 및 버전 확인 결과](./2025-07-05-22-29-27.png)
 
 **예상 출력**:
 ```
@@ -127,6 +133,8 @@ $ free -h
 Mem:           7.7Gi       0.5Gi       7.0Gi        0.0Ki       0.2Gi       7.0Gi
 Swap:          2.0Gi          0B       2.0Gi
 ```
+
+![Debian 시스템 정보 확인 (배포판, 커널, 메모리, 디스크)](./2025-07-05-22-30-43.png)
 
 ## Step 5: Debian 시스템 업데이트
 
@@ -199,6 +207,8 @@ writeros-dev/
 └── scripts/
 ```
 
+![WriterOS 개발 디렉토리 구조 생성 결과](./2025-07-05-22-33-26.png)
+
 ### Git 설정
 ```bash
 # Git 사용자 정보 설정
@@ -223,6 +233,8 @@ update-binfmts --display qemu-aarch64
 #      ...
 ```
 
+![QEMU ARM64 에뮬레이션 설정 확인](./2025-07-05-22-35-02.png)
+
 ### 크로스 컴파일 환경 테스트
 ```bash
 # ARM64 크로스 컴파일러 확인
@@ -231,6 +243,8 @@ aarch64-linux-gnu-gcc --version
 # 예상 출력:
 # aarch64-linux-gnu-gcc (Debian 12.2.0-14) 12.2.0
 ```
+
+![ARM64 크로스 컴파일러 버전 확인](./2025-07-05-22-35-41.png)
 
 ## Step 9: 첫 번째 테스트
 
@@ -270,19 +284,39 @@ wsl --list --verbose | grep Debian
 
 # 2. Debian 버전 확인
 cat /etc/debian_version
+```
 
+![Debian 버전 확인 결과](./2025-07-05-22-37-26.png)
+
+```bash
 # 3. 개발 도구 확인
 which gcc git debootstrap live-build
+```
 
+![개발 도구 설치 위치 확인](./2025-07-05-22-38-04.png)
+
+```bash
 # 4. 크로스 컴파일 확인
 which aarch64-linux-gnu-gcc
+```
 
+![ARM64 크로스 컴파일러 설치 위치 확인](./2025-07-05-22-38-25.png)
+
+```bash
 # 5. 작업 디렉토리 확인
 ls -la ~/writeros-dev/
+```
 
+![WriterOS 개발 디렉토리 내용 확인](./2025-07-05-22-38-53.png)
+
+```bash
 # 6. 권한 확인
 sudo -l
 ```
+
+![사용자 sudo 권한 확인 결과](./2025-07-05-22-39-24.png)
+
+**모든 체크리스트 통과! ✅**
 
 ## 🎉 완료!
 
