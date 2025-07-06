@@ -22,47 +22,47 @@ free -h && df -h ~ && nproc
 
 ## Step 1: WriterOS 최적화 설정
 
-### 부트 시간 최적화 설정
+### Boot Time Optimization Settings
 ```bash
-# 부트 최적화 패키지 추가
+# Add boot optimization packages
 cat >> config/package-lists/writeros-base.list.chroot << 'EOF'
 
-# 부트 최적화
+# Boot optimization
 systemd
 systemd-bootchart
 bootlogd
 preload
 
-# 메모리 최적화  
+# Memory optimization  
 zram-tools
 earlyoom
 
-# 파일 시스템 최적화
+# File system optimization
 btrfs-progs
 f2fs-tools
 EOF
 ```
 
-### 불필요한 패키지 제거 목록
+### Remove Unnecessary Packages
 ```bash
-# 제거할 패키지 목록 생성
+# Create package removal list
 cat > config/package-lists/writeros-remove.list.chroot << 'EOF'
-# 멀티미디어 (글쓰기 OS에 불필요)
+# Multimedia (unnecessary for writing OS)
 pulseaudio-
 alsa-utils-
 sound-theme-freedesktop-
 
-# 게임
+# Games
 gnome-games-
 games-*
 
-# 개발 도구 (최소 버전에서 제거)
+# Development tools (remove from minimal version)
 gcc-
 g++-
 make-
 libc6-dev-
 
-# 대용량 문서
+# Large documentation
 doc-base-
 man-db-
 manpages-
@@ -70,12 +70,12 @@ info-
 EOF
 ```
 
-### 커널 최적화 설정
+### Kernel Optimization Settings
 ```bash
-# 커널 부트 파라미터 최적화
+# Optimize kernel boot parameters
 vim config/bootloaders/syslinux/live.cfg.in
 
-# 기존 내용을 다음으로 교체:
+# Replace existing content with:
 cat > config/bootloaders/syslinux/live.cfg.in << 'EOF'
 label live-@FLAVOUR@
 	menu label ^WriterOS (@FLAVOUR@)
@@ -94,17 +94,17 @@ EOF
 
 ## Step 2: WriterOS 전용 기능 구현
 
-### 전력 관리 최적화 hook
+### Power Management Optimization Hook
 ```bash
-# 전력 관리 전용 hook 생성
+# Create power management hook
 cat > config/hooks/live/0030-power-optimization.hook.chroot << 'EOF'
 #!/bin/bash
 
-echo "=== WriterOS 전력 관리 최적화 시작 ==="
+echo "=== WriterOS Power Management Optimization Started ==="
 
-# TLP 고급 설정
+# TLP advanced settings
 cat > /etc/tlp.conf << 'TLP_CONF'
-# WriterOS 전력 최적화 설정
+# WriterOS Power Optimization Settings
 
 # CPU
 CPU_SCALING_GOVERNOR_ON_AC=performance
@@ -116,17 +116,17 @@ CPU_MAX_PERF_ON_AC=100
 CPU_MIN_PERF_ON_BAT=0
 CPU_MAX_PERF_ON_BAT=30
 
-# 디스크
+# Disk
 DISK_APM_LEVEL_ON_AC="254 254"
 DISK_APM_LEVEL_ON_BAT="128 128"
 DISK_SPINDOWN_TIMEOUT_ON_AC="0 0"
 DISK_SPINDOWN_TIMEOUT_ON_BAT="60 60"
 
-# WiFi 전력 절약
+# WiFi power saving
 WIFI_PWR_ON_AC=off
 WIFI_PWR_ON_BAT=on
 
-# USB 자동 서스펜드
+# USB auto suspend
 USB_AUTOSUSPEND=1
 USB_BLACKLIST_PHONE=1
 
@@ -135,7 +135,7 @@ PCIE_ASPM_ON_AC=default
 PCIE_ASPM_ON_BAT=powersupersave
 TLP_CONF
 
-# Zram 스왑 설정 (메모리 최적화)
+# Zram swap settings (memory optimization)
 cat > /etc/systemd/system/zram-swap.service << 'ZRAM_SERVICE'
 [Unit]
 Description=Enable compressed swap in memory using zram
@@ -157,7 +157,7 @@ ZRAM_SERVICE
 
 systemctl enable zram-swap
 
-# 빠른 부팅을 위한 서비스 최적화
+# Service optimization for faster boot
 systemctl mask systemd-networkd-wait-online.service
 systemctl mask NetworkManager-wait-online.service
 systemctl mask apt-daily.service
@@ -165,26 +165,26 @@ systemctl mask apt-daily.timer
 systemctl mask apt-daily-upgrade.timer
 systemctl mask apt-daily-upgrade.service
 
-echo "=== WriterOS 전력 관리 최적화 완료 ==="
+echo "=== WriterOS Power Management Optimization Completed ==="
 EOF
 
 chmod +x config/hooks/live/0030-power-optimization.hook.chroot
 ```
 
-### 글쓰기 환경 특화 hook
+### Writing Environment Optimization Hook
 ```bash
-# 글쓰기 환경 최적화 hook
+# Create writing environment optimization hook
 cat > config/hooks/live/0040-writing-environment.hook.chroot << 'EOF'
 #!/bin/bash
 
-echo "=== WriterOS 글쓰기 환경 설정 시작 ==="
+echo "=== WriterOS Writing Environment Setup Started ==="
 
-# 글꼴 최적화 설정
+# Font optimization settings
 cat > /etc/fonts/local.conf << 'FONT_CONF'
 <?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
-  <!-- 한글 폰트 우선순위 -->
+  <!-- Korean font priority -->
   <alias>
     <family>serif</family>
     <prefer>
@@ -209,7 +209,7 @@ cat > /etc/fonts/local.conf << 'FONT_CONF'
     </prefer>
   </alias>
 
-  <!-- 글쓰기 최적화 렌더링 -->
+  <!-- Writing optimized rendering -->
   <match target="font">
     <edit name="antialias" mode="assign">
       <bool>true</bool>
@@ -230,7 +230,7 @@ cat > /etc/fonts/local.conf << 'FONT_CONF'
 </fontconfig>
 FONT_CONF
 
-# 입력기 자동 시작 설정
+# Input method auto-start setup
 mkdir -p /home/writeros/.config/autostart
 cat > /home/writeros/.config/autostart/fcitx5.desktop << 'FCITX5_AUTOSTART'
 [Desktop Entry]
@@ -244,7 +244,7 @@ StartupNotify=false
 NoDisplay=true
 FCITX5_AUTOSTART
 
-# Openbox 창 관리자 설정 (글쓰기 집중 환경)
+# Openbox window manager setup (writing focused environment)
 mkdir -p /home/writeros/.config/openbox
 cat > /home/writeros/.config/openbox/rc.xml << 'OPENBOX_CONF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -309,7 +309,7 @@ cat > /home/writeros/.config/openbox/rc.xml << 'OPENBOX_CONF'
   </resize>
   
   <applications>
-    <!-- Neovim 창 최적화 -->
+    <!-- Neovim window optimization -->
     <application name="nvim">
       <decor>yes</decor>
       <shade>no</shade>
@@ -334,148 +334,148 @@ cat > /home/writeros/.config/openbox/rc.xml << 'OPENBOX_CONF'
 </openbox_config>
 OPENBOX_CONF
 
-# 파일 소유권 설정
+# Set file ownership
 chown -R writeros:writeros /home/writeros/.config
 
-echo "=== WriterOS 글쓰기 환경 설정 완료 ==="
+echo "=== WriterOS Writing Environment Setup Completed ==="
 EOF
 
 chmod +x config/hooks/live/0040-writing-environment.hook.chroot
 ```
 
-### WriterOS 셸 스크립트 추가
+### WriterOS Shell Scripts
 ```bash
-# WriterOS 전용 명령어들 추가
+# Add WriterOS specific commands
 cat > config/hooks/live/0050-writeros-commands.hook.chroot << 'EOF'
 #!/bin/bash
 
-echo "=== WriterOS 전용 명령어 설치 시작 ==="
+echo "=== WriterOS Custom Commands Installation Started ==="
 
-# WriterOS 전용 명령어 디렉토리 생성
+# Create WriterOS commands directory
 mkdir -p /usr/local/bin
 
-# 빠른 서스펜드 명령어
+# Quick suspend command
 cat > /usr/local/bin/writeros-suspend << 'SUSPEND_CMD'
 #!/bin/bash
-# WriterOS 빠른 서스펜드
+# WriterOS quick suspend
 
-echo "WriterOS: 서스펜드 모드로 진입..."
+echo "WriterOS: Entering suspend mode..."
 sync
 echo mem > /proc/sys/vm/drop_caches
 systemctl suspend
 SUSPEND_CMD
 
-# 성능 모드 전환 명령어
+# Performance mode command
 cat > /usr/local/bin/writeros-performance << 'PERF_CMD'
 #!/bin/bash
-# WriterOS 성능 모드
+# WriterOS performance mode
 
-echo "WriterOS: 성능 모드 활성화..."
+echo "WriterOS: Activating performance mode..."
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo 0 > /proc/sys/kernel/nmi_watchdog
-echo "성능 모드 활성화 완료"
+echo "Performance mode activated"
 PERF_CMD
 
-# 절전 모드 전환 명령어  
+# Power saving mode command
 cat > /usr/local/bin/writeros-powersave << 'POWER_CMD'
 #!/bin/bash
-# WriterOS 절전 모드
+# WriterOS power saving mode
 
-echo "WriterOS: 절전 모드 활성화..."
+echo "WriterOS: Activating power saving mode..."
 echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 echo 1 > /proc/sys/kernel/nmi_watchdog
-echo "절전 모드 활성화 완료"
+echo "Power saving mode activated"
 POWER_CMD
 
-# 글쓰기 모드 (집중 환경)
+# Writing focus mode (distraction-free environment)
 cat > /usr/local/bin/writeros-focus << 'FOCUS_CMD'
 #!/bin/bash
-# WriterOS 글쓰기 집중 모드
+# WriterOS writing focus mode
 
-echo "WriterOS: 글쓰기 집중 모드 활성화..."
+echo "WriterOS: Activating writing focus mode..."
 
-# 불필요한 서비스 중지
+# Stop unnecessary services
 systemctl stop NetworkManager 2>/dev/null
 systemctl stop bluetooth 2>/dev/null
 
-# CPU 절전 모드
+# CPU power saving mode
 echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 
-# 화면 밝기 조절 (배터리 절약)
+# Adjust screen brightness (battery saving)
 if [ -f /sys/class/backlight/*/brightness ]; then
     current=$(cat /sys/class/backlight/*/brightness)
     max=$(cat /sys/class/backlight/*/max_brightness)
-    target=$((max * 60 / 100))  # 60%로 설정
+    target=$((max * 60 / 100))  # Set to 60%
     echo $target > /sys/class/backlight/*/brightness
 fi
 
-# Neovim 실행
+# Launch Neovim
 cd /home/writeros
 su - writeros -c "DISPLAY=:0 nvim"
 FOCUS_CMD
 
-# 실행 권한 부여
+# Set execution permissions
 chmod +x /usr/local/bin/writeros-*
 
-# sudoers에 권한 추가 (비밀번호 없이 전원 관리)
+# Add sudoers permissions (password-free power management)
 cat >> /etc/sudoers << 'SUDOERS_APPEND'
 
-# WriterOS 전용 명령어 권한
+# WriterOS custom commands permissions
 writeros ALL=(ALL) NOPASSWD: /usr/local/bin/writeros-*
 writeros ALL=(ALL) NOPASSWD: /bin/systemctl suspend
 writeros ALL=(ALL) NOPASSWD: /bin/systemctl poweroff
 writeros ALL=(ALL) NOPASSWD: /bin/systemctl reboot
 SUDOERS_APPEND
 
-echo "=== WriterOS 전용 명령어 설치 완료 ==="
+echo "=== WriterOS Custom Commands Installation Completed ==="
 EOF
 
 chmod +x config/hooks/live/0050-writeros-commands.hook.chroot
 ```
 
-## Step 3: 최적화된 빌드 실행
+## Step 3: Optimized Build Execution
 
-### 빌드 전 최종 설정 확인
+### Final Configuration Check Before Build
 ```bash
-# 설정 파일들 확인
+# Check configuration files
 cd ~/writeros-build/amd64
 
-# 패키지 목록 확인
+# Check package lists
 cat config/package-lists/writeros-base.list.chroot
 
-# hook 스크립트들 확인
+# Check hook scripts
 ls -la config/hooks/live/
 
-# 부트로더 설정 확인
+# Check bootloader configuration
 cat config/bootloaders/syslinux/live.cfg.in
 ```
 
-### 최적화된 빌드 실행
+### Execute Optimized Build
 ```bash
-# 이전 빌드 정리
+# Clean previous build
 sudo lb clean
 
-# 캐시는 유지하고 새로 빌드
-echo "=== WriterOS 최적화 빌드 시작 ==="
+# New build while keeping cache
+echo "=== WriterOS Optimized Build Started ==="
 time sudo lb build
 
-# 빌드 시간 측정과 동시에 진행 상황 모니터링
+# Monitor build progress while measuring time
 ```
 
-**예상 빌드 시간**: 20-40분 (캐시 사용 시)
+**Expected Build Time**: 20-40 minutes (with cache)
 
-### 빌드 결과 분석
+### Build Result Analysis
 ```bash
-# 빌드 완료 후 분석
+# Analyze after build completion
 ls -lah *.iso
 
-# ISO 크기 비교 (이전 버전과)
+# Compare ISO size (with previous version)
 du -h live-image-amd64.hybrid.iso
 
-# 목표: 800MB 이하
-# 실제: 700-900MB 예상
+# Target: Under 800MB
+# Expected: 700-900MB
 
-# ISO 내용 확인
+# Check ISO contents
 mkdir -p /tmp/iso-mount
 sudo mount -o loop live-image-amd64.hybrid.iso /tmp/iso-mount
 ls -la /tmp/iso-mount/

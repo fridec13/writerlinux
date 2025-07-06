@@ -17,7 +17,7 @@ df -h ~          # 디스크 공간 (10GB+ 필요)
 free -h          # 메모리 (4GB+ 권장)
 nproc            # CPU 코어 수 (멀티코어 권장)
 ```
-
+![](2025-07-06-18-54-53.png)
 ## Step 1: Live Build 패키지 설치 확인
 
 ### 설치된 패키지 확인
@@ -65,7 +65,7 @@ cd writeros-build
 # 디렉토리 구조 확인
 tree -L 2
 ```
-
+![](2025-07-06-18-56-08.png)
 **예상 출력**:
 ```
 writeros-build/
@@ -89,7 +89,8 @@ lb config \
     --bootloader syslinux \
     --binary-images iso-hybrid \
     --cache-packages true \
-    --cache-stages true
+    --cache-stages true \
+    --debian-installer false
 
 # 생성된 설정 확인
 ls -la
@@ -101,35 +102,38 @@ auto/           # 자동 빌드 스크립트들
 config/         # 상세 설정 파일들
 .build/         # 빌드 상태 정보
 ```
-
+![](2025-07-06-18-56-52.png)
 ## Step 3: WriterOS 기본 설정 구성
+
+> **⚠️ 중요**: 패키지 목록과 Hook 스크립트에는 **영문 주석만** 사용하세요!  
+> 한글 주석은 Live Build 파싱 에러를 유발할 수 있습니다.
 
 ### 패키지 목록 정의
 ```bash
 # 기본 패키지 목록 생성
 cat > config/package-lists/writeros-base.list.chroot << 'EOF'
-# 기본 시스템
+# Base system
 live-boot
 live-config
 live-config-systemd
 
-# 네트워킹
+# Networking
 network-manager
 wireless-tools
 wpasupplicant
 
-# 한글 지원
+# Korean language support
 fonts-noto-cjk
 fonts-nanum
 fcitx5
 fcitx5-hangul
 fcitx5-config-qt
 
-# 에디터 (핵심!)
+# Text editors
 neovim
 nano
 
-# 기본 유틸리티
+# Basic utilities
 curl
 wget
 git
@@ -138,13 +142,13 @@ tree
 unzip
 file
 
-# X11 최소 환경
+# Minimal X11 environment
 xserver-xorg-core
 xinit
 openbox
 xterm
 
-# 전력 관리
+# Power management
 acpi
 acpid
 tlp
@@ -156,7 +160,7 @@ EOF
 ```bash
 # 개발 도구 패키지 목록
 cat > config/package-lists/writeros-dev.list.chroot << 'EOF'
-# 개발 도구 (개발 버전용)
+# Development tools
 build-essential
 gcc
 make
@@ -166,7 +170,7 @@ python3-pip
 nodejs
 npm
 
-# 디버깅 도구
+# Debugging tools
 gdb
 strace
 tcpdump
@@ -183,15 +187,15 @@ mkdir -p config/hooks/live
 cat > config/hooks/live/0010-writeros-config.hook.chroot << 'EOF'
 #!/bin/bash
 
-# WriterOS 기본 설정 스크립트
+# WriterOS basic configuration script
 
-echo "=== WriterOS 기본 설정 시작 ==="
+echo "=== WriterOS Basic Setup Started ==="
 
-# 기본 사용자 생성 (writeros)
+# Create default user (writeros)
 useradd -m -s /bin/bash -G sudo,audio,video,plugdev writeros
 echo "writeros:writeros" | chpasswd
 
-# 자동 로그인 설정
+# Auto login configuration
 mkdir -p /etc/systemd/system/getty@tty1.service.d
 cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << 'CONF'
 [Service]
@@ -199,7 +203,7 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin writeros --noclear %I $TERM
 CONF
 
-# 한글 입력기 설정
+# Korean input method configuration
 mkdir -p /home/writeros/.config/fcitx5
 cat > /home/writeros/.config/fcitx5/config << 'FCITX5_CONF'
 [Hotkey]
@@ -209,16 +213,16 @@ FCITX5_CONF
 
 chown -R writeros:writeros /home/writeros/.config
 
-# 전력 관리 최적화
+# Power management optimization
 systemctl enable tlp
 systemctl enable acpid
 
-# 불필요한 서비스 비활성화
+# Disable unnecessary services
 systemctl disable bluetooth
 systemctl disable cups
 systemctl disable NetworkManager-wait-online
 
-echo "=== WriterOS 기본 설정 완료 ==="
+echo "=== WriterOS Basic Setup Completed ==="
 EOF
 
 # 실행 권한 부여
@@ -231,35 +235,35 @@ chmod +x config/hooks/live/0010-writeros-config.hook.chroot
 cat > config/hooks/live/0020-neovim-setup.hook.chroot << 'EOF'
 #!/bin/bash
 
-echo "=== Neovim 설정 시작 ==="
+echo "=== Neovim Setup Started ==="
 
-# writeros 사용자용 Neovim 설정
+# Neovim configuration for writeros user
 mkdir -p /home/writeros/.config/nvim
 
 cat > /home/writeros/.config/nvim/init.lua << 'NVIM_CONFIG'
--- WriterOS Neovim 기본 설정
+-- WriterOS Neovim basic configuration
 
--- 기본 옵션
-vim.opt.number = true           -- 줄 번호 표시
-vim.opt.relativenumber = true   -- 상대 줄 번호
-vim.opt.tabstop = 4            -- 탭 크기
-vim.opt.shiftwidth = 4         -- 인덴트 크기
-vim.opt.expandtab = true       -- 탭을 스페이스로
-vim.opt.wrap = true            -- 줄 바꿈
-vim.opt.linebreak = true       -- 단어 단위로 줄 바꿈
+-- Basic options
+vim.opt.number = true           -- Show line numbers
+vim.opt.relativenumber = true   -- Show relative line numbers
+vim.opt.tabstop = 4            -- Tab width
+vim.opt.shiftwidth = 4         -- Indent width
+vim.opt.expandtab = true       -- Use spaces for tabs
+vim.opt.wrap = true            -- Line wrapping
+vim.opt.linebreak = true       -- Word-wise line breaking
 
--- 한글 지원
+-- Korean language support
 vim.opt.encoding = 'utf-8'
 vim.opt.fileencoding = 'utf-8'
 
--- 검색 설정
-vim.opt.ignorecase = true      -- 대소문자 무시
-vim.opt.smartcase = true       -- 스마트 케이스
+-- Search settings
+vim.opt.ignorecase = true      -- Case insensitive search
+vim.opt.smartcase = true       -- Smart case search
 
--- 기본 키맵
-vim.g.mapleader = ' '          -- 리더 키를 스페이스로
+-- Basic keymap
+vim.g.mapleader = ' '          -- Set leader key to space
 
--- 간단한 키 바인딩
+-- Simple key bindings
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = 'Save file' })
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = 'Quit' })
 
@@ -268,7 +272,7 @@ NVIM_CONFIG
 
 chown -R writeros:writeros /home/writeros/.config
 
-echo "=== Neovim 설정 완료 ==="
+echo "=== Neovim Setup Completed ==="
 EOF
 
 chmod +x config/hooks/live/0020-neovim-setup.hook.chroot
@@ -288,7 +292,7 @@ time sudo lb build
 # 빌드 진행 상황 모니터링 (다른 터미널에서)
 watch -n 5 'du -sh . && ls -la *.iso 2>/dev/null || echo "빌드 진행 중..."'
 ```
-
+![](2025-07-06-19-11-39.png)
 **빌드 과정 단계들**:
 ```
 1. bootstrap    # 기본 Debian 시스템 다운로드
@@ -296,7 +300,7 @@ watch -n 5 'du -sh . && ls -la *.iso 2>/dev/null || echo "빌드 진행 중..."'
 3. binary       # ISO 이미지 생성
 4. source       # 소스 패키지 생성 (선택사항)
 ```
-
+![](2025-07-06-19-41-36.png)
 ### 빌드 결과 확인
 ```bash
 # 빌드 완료 후 확인
@@ -432,6 +436,44 @@ vim config/package-lists/writeros-base.list.chroot
 # 재빌드
 sudo lb clean
 sudo lb build
+```
+
+#### 5. 한글 주석으로 인한 파싱 오류
+```bash
+# 증상: config 단계 필요 에러, installer 단계 실패
+# E: the following stage is required to be done first: config
+
+# 원인: 패키지 목록이나 Hook 스크립트의 한글 주석
+# Live Build는 ASCII 기반으로 UTF-8 한글 주석 파싱 실패
+
+# 해결책: 모든 한글 주석을 영문으로 변경
+# 잘못된 예:
+# # 기본 시스템     ← 한글 주석 (문제)
+# # 에디터 (핵심!)  ← 한글 괄호 (문제)
+
+# 올바른 예:
+# # Base system    ← 영문 주석 (정상)
+# # Text editors   ← 영문만 (정상)
+
+# 완전 재설정
+sudo lb clean --purge
+rm -rf config/ auto/ .build/
+
+# 영문 주석만 사용해서 재설정
+lb config --debian-installer false
+
+# 가장 안전한 방법: 주석 없는 최소 패키지 목록
+cat > config/package-lists/writeros-base.list.chroot << 'EOF'
+live-boot
+live-config
+live-config-systemd
+network-manager
+fonts-noto-cjk
+neovim
+git
+curl
+tlp
+EOF
 ```
 
 ## 📊 빌드 시간 최적화
